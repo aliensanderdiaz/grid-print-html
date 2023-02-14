@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      canvas {
+        background: #59d;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="500" height="20"></canvas>
+
+    <script>
+      ctx = canvas.getContext("2d");
+
+      const styles = {
+        default: { font: "14px arial", fillStyle: "black" },
+        b: { font: "14px arial black", fillStyle: "black" },
+        w: { fillStyle: "white" },
+      };
+
+      canvasMarkupText(
+        ctx,
+        "Testing <b>testing BOLD <w>bold white</w></b> and testing with default <w>and white</w>",
+        10,
+        14,
+        styles
+      );
+
+      function canvasMarkupText(ctx, str, x, y, styles) {
+        console.log({ ctx, str, x, y, styles })
+        const content = (start, end, rule) => ({ start, end, rule });
+        console.log({ content })
+        const render = (content) => {
+          Object.assign(ctx, styles[content.rule] ? styles[content.rule] : {});
+          const s = str.slice(content.start, content.end);
+          ctx.fillText(s, x, y);
+          x += ctx.measureText(s).width;
+        };
+
+        const stack = [],
+          xx = x;
+        var pos = 0,
+          current = content(pos, pos, "default");
+        stack.push(current);
+        while (pos < str.length) {
+          const c = str[pos++];
+          if (c === "<") {
+            if (str[pos] === "/") {
+              render(stack.pop());
+              current = stack[stack.length - 1];
+              current.start = current.end = pos += 3;
+            } else {
+              render(current);
+              pos += 2;
+              stack.push((current = content(pos, pos, str[pos - 2])));
+            }
+          } else {
+            current.end = pos;
+          }
+        }
+        stack.length && render(current);
+        return x - xx;
+      }
+    </script>
+  </body>
+</html>
